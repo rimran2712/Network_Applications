@@ -1,0 +1,10 @@
+show ip int brie
+show ip ospf neighbor
+show ip route
+show cdp neighbors
+
+
+
+
+
+

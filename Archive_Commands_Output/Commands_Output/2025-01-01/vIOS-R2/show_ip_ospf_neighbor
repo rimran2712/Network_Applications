@@ -1,0 +1,3 @@
+Neighbor ID     Pri   State           Dead Time   Address         Interface
+7.7.7.7           1   FULL/DR         00:00:32    10.2.7.7        GigabitEthernet0/1
+5.5.5.5           1   FULL/DR         00:00:32    10.2.5.5        GigabitEthernet0/2
