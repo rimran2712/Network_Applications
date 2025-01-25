@@ -37,9 +37,34 @@ ipdb> pp nr.inventory.hosts['vIOS-R1']['interfaces_info']['GigabitEthernet0/1'][
 ipdb> pp nr.inventory.hosts['vIOS-R1']['interfaces_info']['Loopback0']['mac_address']
 *** KeyError: 'mac_address'
 
+ipdb> pp nr.inventory.hosts['vIOS-R1']['cdp_info']['cdp']['index']
+{1: {'capability': 'R S I',
+     'device_id': 'MGMT-vSW',
+     'hold_time': 141,
+     'local_interface': 'GigabitEthernet0/0',
+     'platform': '',
+     'port_id': 'GigabitEthernet0/0'},
+ 2: {'capability': 'R B',
+     'device_id': 'vIOS-R6.mylab.local',
+     'hold_time': 172,
+     'local_interface': 'GigabitEthernet0/2',
+     'platform': 'Gig',
+     'port_id': '0/2'},
+ 3: {'capability': 'R B',
+     'device_id': 'vIOS-R5.mylab.local',
+     'hold_time': 147,
+     'local_interface': 'GigabitEthernet0/1',
+     'platform': 'Gig',
+     'port_id': '0/1'}}
+ipdb> 
+
+
 '''
 
 mac_input = ""
+#intiate default mac value
+mac_found = False
+#intiate default mac status
 
 while True:
     mac_input = input ("Enter MAC Address in format [50ed.d800.ab100] (or 'quit' to stop):- ")
@@ -51,7 +76,7 @@ while True:
         #rprint (f"[bold green]You Enter Correct MAC Address: [ {mac_input.lower()} ][/bold green]")
         break
     else:
-        rprint (f"[bold red]\nInvalid MAC Addrees: [ {mac_input.lower()} ][/bold red]")
+        rprint (f"[bold red]\nInvalid MAC Addrees: [ {mac_input.lower()} ][/bold red]\n")
 
 
 def mac_address_finding (task, pbar):
@@ -59,55 +84,44 @@ def mac_address_finding (task, pbar):
     task.host['interfaces_info'] = interfaces_result.scrapli_response.genie_parse_output()
     interfaces_data = task.host['interfaces_info']
     for interface in interfaces_data:
-        mac_address = interfaces_data[interface]['mac_address']
-        if mac_address == mac_input.lower():
-            rprint (f"[bold green]{task.host}'s {interface} has MAC Address [ {mac_input.lower()} ][/bold green]")
-        #else:
-        #    rprint (f"[bold red]\nMAC Addrees Not Found: [ {mac_input.lower()} ][/bold red]")
-
-
-
+        try:
+            mac_address = interfaces_data[interface]['mac_address']
+            if mac_address == mac_input.lower():
+                global mac_found
+                mac_found = True
+                rprint (f"[bold green]{task.host}'s {interface} has MAC Address [ {mac_input.lower()} ][/bold green]")
+                rprint (f"[cyan]Generating Neighbor Details....[/cyan]")
+                nbr_info (task, interface)
+                break
+        except KeyError:  # Loopback does not have MAC addess key so we need to skip loopback
+            pass
     
-    '''
-    # Open the file in read mode
-    with open("show_commands_list.txt") as show_commands_file:
-        # Read each line one by one
-        for show_cmd in show_commands_file:
-            # if users does not type any command or line is empty than we dont need to send command
-            if show_cmd != "\n" or show_cmd == "": 
-                try:
-                    output_file_name = show_cmd.replace (' ', '_')
-                    # main folder where we will store all commands output under subfolders
-                    output_folder_name = "Commands_Output"
-                    # Date name folder inside main output folder
-                    date_folder = output_folder_name + "/" + str (date.today())
-                    # Hostname folder inside main date name folder
-                    device_folder = date_folder + "/" + f"{task.host}"
-                    pathlib.Path(output_folder_name).mkdir(exist_ok=True) # exist_ok True mean if folder already exist than dont over write, done create
-                    pathlib.Path(date_folder).mkdir(exist_ok=True) # create sub folder - date folder
-                    pathlib.Path(device_folder).mkdir(exist_ok=True) # create sub folder for each host
-                    
-                    # Send Command and store result in output variable
-                    output = task.run (task=send_command, command=show_cmd)
-                    # output.result attribute storer value of output
-
-                    # Lets write the output of command into file
-                    task.run (
-                        task=write_file,
-                        content=output.result,
-                        filename= str (device_folder + "/" + output_file_name)
-
-                    )
-                except:
-                    print ("Invalid Command Dettected: ", show_cmd)
-    '''
     pbar.update () # Update prgress bar once finish All configuration for each device
 
+def nbr_info (task, interface):
+    nbr_found = False
+    cdp_result = task.run (task=send_command, command="show cdp neighbors")
+    task.host['cdp_info'] = cdp_result.scrapli_response.genie_parse_output()
+    nbr_index = task.host['cdp_info']['cdp']['index']
+    for nbr in nbr_index:
+        if interface == nbr_index[nbr]['local_interface']: #find intrested local interface
+            nbr_found = True
+            remote_dev = nbr_index[nbr]['device_id']
+            remote_intferface = nbr_index[nbr]['port_id']
+            remote_platform = nbr_index[nbr]['platform']
+            rprint (f"[bold green]{interface} Connected to {remote_dev}'s Interface {remote_platform} {remote_intferface} [/bold green]")
+    if nbr_found != True:
+        rprint (f"[bold red]{interface} is not connected with any device or Interface down[/bold red]")
 if mac_input != "":
+    rprint (f"[bold green]Searching for the MAC Address [ {mac_input} ][/bold green]")
     with tqdm (total=len(nr.inventory.hosts), desc = 'MAC Address Finding', colour='green') as pbar:
         results = nr.run (task=mac_address_finding, pbar=pbar)
+#        print_result (results)
 
-print("MAC Search Completed !!!\n")
+if mac_found == False  and mac_input != "":
+    rprint (f"\n[bold red]MAC address not found[/bold red]")
+
+rprint (f"\n[green]Goodbye !!!\n[/green]")
 #time.sleep(5) # simulating delay in seconds
 #print_result (results)
 #import ipdb
