@@ -1,0 +1,86 @@
+---
+# Managment Subnet for Automation Interface mgmt vrf: 172.16.100.x/30
+# x: is subnet ID as per interface connected with MGMT Switch 
+
+device_type: "spine"
+
+interfaces:
+    - name: lo0
+      ip: 10.101.1.1
+      mask: 255.255.255.255
+    - name: Gi0/1
+      ip: 10.1.101.101
+      mask: 255.255.255.0
+    - name: Gi0/2
+      ip: 10.2.101.101
+      mask: 255.255.255.0
+    - name: Gi0/3
+      ip: 10.3.101.101
+      mask: 255.255.255.0
+    - name: Gi0/4
+      ip: 10.4.101.101
+      mask: 255.255.255.0
+    - name: Gi0/5
+      ip: 10.5.101.101
+      mask: 255.255.255.0
+    - name: Gi0/6
+      ip: 10.6.101.101
+      mask: 255.255.255.0
+    # Loopback1 will be advertise to BGP
+    - name: lo1
+      ip: 101.101.101.101
+      mask: 255.255.255.255
+
+bgp:
+    localAsn: 65000
+    routerId: 10.101.1.1
+    update_source: loopback0
+    route_reflector: False
+    peer_group_name: "MyPeerGroup"
+    networks:
+        - net: 101.101.101.101
+          mask: 255.255.255.255
+    neighbors:
+        - address: 10.1.1.1 #Leaf-01- Route Reflector Client
+          type: "eBGP"
+          remoteAsn: 65001 
+        - address: 10.2.1.1 #Leaf-02- Route Reflector Client
+          type: "eBGP"
+          remoteAsn: 65001
+        - address: 10.3.1.1 #Leaf-03- Route Reflector Client
+          type: "eBGP"
+          remoteAsn: 65002
+        - address: 10.4.1.1 #Leaf-04- Route Reflector Client
+          type: "eBGP"
+          remoteAsn: 65002
+        - address: 10.5.1.1 #Leaf-05- Route Reflector Client
+          type: "eBGP"
+          remoteAsn: 65003
+        - address: 10.6.1.1 #Leaf-06- Route Reflector Client
+          type: "eBGP"
+          remoteAsn: 65003
+ospf:
+    rid: 10.101.1.1
+    proc_id: 127
+    networks:
+        - net: 10.101.1.1
+          wildcard: 0.0.0.0
+          area: 0
+        - net: 10.1.101.0
+          wildcard: 0.0.0.255
+          area: 0
+        - net: 10.2.101.0
+          wildcard: 0.0.0.255
+          area: 0
+        - net: 10.3.101.0
+          wildcard: 0.0.0.255
+          area: 0
+        - net: 10.4.101.0
+          wildcard: 0.0.0.255
+          area: 0
+        - net: 10.5.101.0
+          wildcard: 0.0.0.255
+          area: 0
+        - net: 10.6.101.0
+          wildcard: 0.0.0.255
+          area: 0
