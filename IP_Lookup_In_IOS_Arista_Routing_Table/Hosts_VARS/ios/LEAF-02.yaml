@@ -1,0 +1,50 @@
+---
+# Managment Subnet for Automation Interface mgmt vrf: 172.16.100.x/30
+# x: is subnet ID as per interface connected with MGMT Switch 
+
+device_type: "leaf"
+
+interfaces:
+    - name: lo0
+      ip: 10.2.1.1
+      mask: 255.255.255.255
+    - name: Gi0/1
+      ip: 10.2.101.2
+      mask: 255.255.255.0
+    - name: Gi0/2
+      ip: 10.2.102.2
+      mask: 255.255.255.0
+    # Loopback1 will be advertise to BGP
+    - name: lo1
+      ip: 2.2.2.2
+      mask: 255.255.255.255
+
+bgp:
+    localAsn: 65001
+    routerId: 10.2.1.1
+    update_source: loopback0
+    route_reflector: False
+    peer_group_name: "NA"
+    networks:
+        - net: 2.2.2.2
+          mask: 255.255.255.255
+    neighbors:
+        - address: 10.101.1.1 #SP01- Route Reflector1
+          type: "eBGP"
+          remoteAsn: 65000 
+        - address: 10.102.1.1 #SP02- Route Reflector2
+          type: "eBGP"
+          remoteAsn: 65000
+ospf:
+    rid: 10.2.1.1
+    proc_id: 127
+    networks:
+        - net: 10.2.1.1
+          wildcard: 0.0.0.0
+          area: 0
+        - net: 10.2.101.0
+          wildcard: 0.0.0.255
+          area: 0
+        - net: 10.2.102.0
+          wildcard: 0.0.0.255
+          area: 0

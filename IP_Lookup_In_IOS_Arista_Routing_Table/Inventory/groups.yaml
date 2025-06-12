@@ -1,0 +1,53 @@
+---
+
+cisco_group:
+    platform: "ios"
+    connection_options:
+        scrapli_netconf:
+            extras:
+                port: 830
+                ssh_config_file: True
+                auth_strict_key: False
+                timeout_transport: 10
+        scrapli:
+            extras:
+                port: 22
+                ssh_config_file: True
+                auth_strict_key: False
+                timeout_transport: 10
+        netmiko:
+            extras:
+                global_delay_factor: 4
+        napalm:
+            extras:
+                optional_args:
+                    global_delay_factor: 4   
+arista_group:
+    username: imran
+    password: Cisco123*
+    platform: "eos"
+    connection_options:
+        scrapli_netconf:
+            extras:
+                port: 830
+                ssh_config_file: True
+                auth_strict_key: False
+                timeout_transport: 10
+        scrapli:
+            extras:
+                port: 22
+                ssh_config_file: True
+                auth_strict_key: False
+                timeout_transport: 10
+    
+juniper_group:
+    platform: "junos"
+
+nexus_group:
+    #platform: "nxos"
+    platform: "nxos_ssh"
+
+north: {}
+    
+
+south: {}
